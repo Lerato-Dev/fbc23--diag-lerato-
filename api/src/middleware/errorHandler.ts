@@ -60,7 +60,7 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   // Do not expose internal technical details to the frontend.
-  // This sends a JSON error response to the frontend.
+  // yThis sends a JSON error response to the frontend.
   res.status(500).json({
     success: false,
     message: "An unexpected server error occurred."

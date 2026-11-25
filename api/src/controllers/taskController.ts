@@ -1,5 +1,6 @@
 
 import type { Request, Response, NextFunction } from "express";
+// Import the Zod issue type so we can describe validation errors.
 import type { ZodIssue } from "zod";
 
 import {
@@ -17,6 +18,7 @@ import * as taskService from "../services/taskService";
 function parseId(rawId: unknown): number | null {
   if (typeof rawId !== "string") {
     return null;
+    
   }
 
   const id = Number(rawId);

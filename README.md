@@ -19,14 +19,57 @@ A task management application built for the FBC23 Developer Diagnostic Brief.
 ## Project structure
 ```text
 fbc23-diag-lerato/
-├── web/                 # Next.js frontend
+├── api/                            Express API (port 5000)
+│   ├── database/
+│   │   ├── .gitkeep                keeps the empty folder in Git
+│   │   └── tasks.db                SQLite database, created on first start (git-ignored)
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── database.ts         opens SQLite, creates the table
+│   │   ├── controllers/
+│   │   │   └── taskController.ts   parse id, validate, pick status code
+│   │   ├── middleware/
+│   │   │   └── errorHandler.ts     turns unexpected errors into JSON
+│   │   ├── models/
+│   │   │   └── taskModel.ts        the only file with SQL
+│   │   ├── routes/
+│   │   │   └── taskRoutes.ts       URL + method to controller function
+│   │   ├── services/
+│   │   │   └── taskService.ts      business rules (currently pass-through)
+│   │   ├── types/
+│   │   │   └── task.ts             Zod schemas + Task, TaskInput types
+│   │   └── server.ts               entry point: config, middleware, routes, listen
+│   ├── swagger/
+│   │   └── swagger.ts              Swagger setup for /api-docs
+│   ├── .env.example                PORT, FRONTEND_URL
+│   ├── .gitignore                  API files Git must not track
+│   ├── package.json                API scripts and dependencies
+│   ├── pnpm-lock.yaml              exact dependency versions
+│   ├── pnpm-workspace.yaml         pnpm settings
+│   └── tsconfig.json               TypeScript settings
+├── docs/                           project documents
+│   ├── communication-diagram.png   how the parts communicate
+│   ├── technical-document.docx     technical document (Word)
+│   └── technical-document.html     technical document (web page)
+├── web/                            Next.js front end (port 3000)
 │   ├── app/
+│   │   ├── globals.css             styles and the 640px breakpoint
+│   │   ├── layout.tsx              HTML shell, metadata, global CSS
+│   │   └── page.tsx                the whole UI (client component)
 │   ├── cypress/
-│   └── package.json
-└── api/                 # Express API and SQLite database
-    ├── src/
-    ├── database/
-    └── package.json
+│   │   └── e2e/
+│   │       └── tasks.cy.ts         end-to-end tests
+│   ├── .env.local.example          NEXT_PUBLIC_API_URL
+│   ├── .gitignore                  web files Git must not track
+│   ├── cypress.config.ts           Cypress base URL and test folder
+│   ├── next-env.d.ts               Next.js types (generated)
+│   ├── next.config.ts              Next.js settings
+│   ├── package.json                web scripts and dependencies
+│   ├── pnpm-lock.yaml              exact dependency versions
+│   ├── pnpm-workspace.yaml         pnpm settings
+│   └── tsconfig.json               TypeScript settings
+├── .gitignore                      files Git must not track
+└── README.md                       how to install, run and test
 ```
 
 ## Requirements
@@ -79,6 +122,13 @@ Example task:
 }
 ```
 
+## API documentation (Swagger)
+Start the backend, then open `http://localhost:5000/api-docs`.
+
+- Click an endpoint, then **Try it out** and **Execute**, to send a real request. This changes the real tasks.
+- The raw OpenAPI document is at `http://localhost:5000/api-docs.json` and can be imported into Postman.
+- Endpoints are described by the `@swagger` comments in `api/src/routes/taskRoutes.ts` and `api/src/server.ts`. Shared settings are in `api/swagger/swagger.ts`.
+
 ## Run frontend tests
 Start the frontend and backend first, then from `web`:
 ```powershell
@@ -108,7 +158,7 @@ Open a second PowerShell terminal. You can run this command from your project fo
 
 ```powershell
 $body = @{
-    title = "Build Frontend User Interface"
+    title = "Build QA User Interface"
     description = "Improve the Next.js frontend and create reusable React components."
     dueDate = "2026-11-22"
     status = "Pending"
@@ -186,3 +236,6 @@ SQLite is a SQL database that stores the data in a local file. It does not requi
 This implementation does not include sign-in because the brief lists it under “Should have (as time allows)”. Tasks are not separated by user accounts. Sorting, search and deployment are also left out so the required task-management features can be completed first.
 ### Create a new file from that path
 New-Item -ItemType Directory -Force -Path "src/controllers", "src/middleware"
+
+## Swagger
+- http://localhost:5000/api-docs 

@@ -1,0 +1,633 @@
+<title>Mini Task Tracker Technical Document</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column modelled on the Cloud23 Week 2 guide — bold black headings, beige-headed tables, red inline code, running footer. */
+:root {
+  --paper: #ffffff;
+  --ink: #111111;
+  --ink-soft: #3d3d3a;
+  --muted: #74726b;
+  --rule: #e4e2da;
+  --table-head: #f5f4ef;
+  --code-bg: #f3f2ee;
+  --code-ink: #d6334a;
+  --accent: #e0313a;
+  --ok: #1d7a46;
+  --ok-bg: #e6f4ec;
+  --warn: #8a5a00;
+  --warn-bg: #fff4d6;
+  --bad: #b42318;
+  --bad-bg: #fdeceb;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #161615; --ink: #f2f1ec; --ink-soft: #d0cec6; --muted: #9b998f;
+    --rule: #32312d; --table-head: #22211e; --code-bg: #24231f; --code-ink: #ff7d8c;
+    --accent: #ff5a62; --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0c060; --warn-bg: #302712;
+    --bad: #ff8a80; --bad-bg: #3a1a18;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #161615; --ink: #f2f1ec; --ink-soft: #d0cec6; --muted: #9b998f;
+  --rule: #32312d; --table-head: #22211e; --code-bg: #24231f; --code-ink: #ff7d8c;
+  --accent: #ff5a62; --ok: #6fd39a; --ok-bg: #16301f; --warn: #f0c060; --warn-bg: #302712;
+  --bad: #ff8a80; --bad-bg: #3a1a18;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.doc { max-width: 780px; margin: 0 auto; padding-block: 56px 32px; }
+
+.brandline { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: .02em; }
+.brandline .mark { display: inline-grid; place-items: center; min-width: 38px; height: 26px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .03em; }
+
+h1, h2, h3, h4 { color: var(--ink); text-wrap: balance; letter-spacing: -.015em; }
+h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.08; font-weight: 800; margin: 28px 0 18px; }
+h2 { font-size: clamp(24px, 3.6vw, 30px); line-height: 1.2; font-weight: 700; margin: 56px 0 14px; padding-top: 8px; }
+h3 { font-size: 20px; font-weight: 700; margin: 34px 0 8px; }
+h4 { font-size: 16px; font-weight: 700; margin: 22px 0 6px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+strong { color: var(--ink); }
+a { color: var(--accent); }
+.author { color: var(--ink-soft); margin-bottom: 26px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.meta b { color: var(--ink-soft); font-weight: 600; }
+
+code { font-family: var(--font-mono); font-size: .84em; color: var(--code-ink); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre.code { font-family: var(--font-mono); font-size: 13.5px; line-height: 1.6; background: var(--code-bg); color: var(--ink); padding: 16px 18px; border-radius: 6px; overflow-x: auto; margin: 0 0 16px; }
+pre.code code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+ul, ol { padding-left: 22px; margin: 0 0 16px; max-width: 68ch; }
+li { margin: 4px 0; }
+
+.table-wrap { overflow-x: auto; margin: 10px 0 20px; border: 1px solid var(--rule); border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.5; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { background: var(--table-head); color: var(--ink); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.id { font-family: var(--font-mono); font-size: 13px; color: var(--ink); white-space: nowrap; font-weight: 500; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.toc { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding-block: 16px; margin: 10px 0 8px; }
+.toc ol { columns: 2 220px; column-gap: 28px; margin: 0; }
+.toc a { color: var(--ink-soft); text-decoration: none; }
+.toc a:hover, .toc a:focus-visible { color: var(--accent); text-decoration: underline; }
+
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+.tag.bad { background: var(--bad-bg); color: var(--bad); }
+
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 0 0 18px; color: var(--ink-soft); }
+.note p:last-child { margin-bottom: 0; }
+
+figure { margin: 18px 0 26px; }
+.diagram { border: 1px solid var(--rule); border-radius: 6px; padding: 18px 12px; overflow-x: auto; background: var(--paper); }
+pre.mermaid { margin: 0; text-align: center; font-family: var(--font-body); }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; max-width: 68ch; }
+figcaption b { color: var(--ink-soft); }
+
+.footer { margin-top: 64px; padding-top: 14px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+@media (max-width: 480px) {
+  body { font-size: 15.5px; }
+  .doc { padding-block: 32px 24px; }
+}
+</style>
+
+<main class="doc">
+
+<div class="brandline"><span class="mark">FBC23</span> Developer Diagnostic · Week 2</div>
+
+<h1>Mini Task Tracker<br>Technical Requirements Document</h1>
+<p class="author">Author: Lerato</p>
+<div class="meta">
+  <span><b>Version</b> 1.0</span>
+  <span><b>Date</b> 22 November 2026</span>
+  <span><b>Status</b> Checked against the code in <code>api/</code> and <code>web/</code></span>
+</div>
+
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#purpose">Purpose and scope</a></li>
+    <li><a href="#users">Users and roles</a></li>
+    <li><a href="#functional">Functional requirements</a></li>
+    <li><a href="#nonfunctional">Non-functional requirements</a></li>
+    <li><a href="#data">Data model</a></li>
+    <li><a href="#api">API design</a></li>
+    <li><a href="#workflows">Workflows</a></li>
+    <li><a href="#architecture">Architecture and structure</a></li>
+    <li><a href="#decisions">Decisions and trade-offs</a></li>
+    <li><a href="#questions">Assumptions and open questions</a></li>
+    <li><a href="#cut">Out of scope and cut list</a></li>
+    <li><a href="#gaps">Appendix: document vs code check</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<h2 id="purpose">1. Purpose and scope</h2>
+<p>The Mini Task Tracker lets one person keep a list of tasks with a title, an optional description and a due date, and mark each task as Pending or Completed. It is a two-part web application: a Next.js front end that runs in the browser and an Express API that stores tasks in a SQLite database file.</p>
+<p>It was built for the FBC23 Developer Diagnostic Brief. The goal is a small application that runs end to end, is structured cleanly, and can be explained step by step.</p>
+
+<h4>In scope</h4>
+<ul>
+  <li>Create, view, edit, complete and delete tasks.</li>
+  <li>Filter the list by status (All, Pending, Completed).</li>
+  <li>Validate every request on the server and return clear error messages.</li>
+  <li>Store tasks so they survive a restart of the API.</li>
+  <li>A layout that works on a phone and on a desktop.</li>
+</ul>
+
+<h4>Deliberately out of scope</h4>
+<ul>
+  <li>Sign-in, user accounts and per-user task lists (listed as "Should have, as time allows" in the brief).</li>
+  <li>Sorting options, search, pagination, deployment. See <a href="#cut">section 11</a>.</li>
+</ul>
+
+<!-- 2 -->
+<h2 id="users">2. Users and roles</h2>
+<p>There is one role. Anyone who can open the front end, or send a request to the API, can do everything.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Role</th><th>Who</th><th>Allowed to</th></tr></thead>
+  <tbody>
+    <tr><td>Task owner (anonymous)</td><td>A single person running the app on their own machine</td><td>List, filter, view, create, edit, complete and delete any task</td></tr>
+  </tbody>
+</table></div>
+<p>Because there is no sign-in, the API never returns <code>401</code> or <code>403</code>. Those branches are drawn as "not applicable" in the request flow in <a href="#workflows">section 7</a>.</p>
+
+<!-- 3 -->
+<h2 id="functional">3. Functional requirements</h2>
+<p>Each requirement is written so it can be tested. <b>API</b> requirements can be checked with Postman or PowerShell; <b>UI</b> requirements in the browser.</p>
+
+<h3>3.1 API</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-1</td><td><code>POST /api/tasks</code> with a valid body creates a task and returns <code>201</code> with the saved task, including its new <code>id</code> and timestamps.</td></tr>
+    <tr><td class="id">FR-2</td><td>A title is required, is trimmed, and must be 1 to 120 characters after trimming. Otherwise the API returns <code>400</code>.</td></tr>
+    <tr><td class="id">FR-3</td><td>A description is optional, is trimmed, defaults to an empty string, and must be 2000 characters or fewer.</td></tr>
+    <tr><td class="id">FR-4</td><td>A due date is required and must match the format <code>YYYY-MM-DD</code>.</td></tr>
+    <tr><td class="id">FR-5</td><td>Status must be <code>Pending</code> or <code>Completed</code>. When it is left out, it defaults to <code>Pending</code>.</td></tr>
+    <tr><td class="id">FR-6</td><td><code>GET /api/tasks</code> returns <code>200</code> with all tasks, ordered by due date (earliest first), then by newest <code>id</code> first.</td></tr>
+    <tr><td class="id">FR-7</td><td><code>GET /api/tasks?status=Pending</code> or <code>?status=Completed</code> returns only tasks with that status. Any other value returns <code>400</code>.</td></tr>
+    <tr><td class="id">FR-8</td><td><code>GET /api/tasks/:id</code> returns <code>200</code> with the task, or <code>404</code> when no task has that id.</td></tr>
+    <tr><td class="id">FR-9</td><td><code>PUT /api/tasks/:id</code> replaces the title, description, due date and status of an existing task, sets <code>updated_at</code>, and returns <code>200</code> with the updated task. It returns <code>404</code> when the task does not exist.</td></tr>
+    <tr><td class="id">FR-10</td><td><code>PATCH /api/tasks/:id/complete</code> sets the status to <code>Completed</code> and returns <code>200</code>. Completing an already completed task also returns <code>200</code>.</td></tr>
+    <tr><td class="id">FR-11</td><td><code>DELETE /api/tasks/:id</code> removes the task permanently and returns <code>200</code> with a confirmation message, or <code>404</code> when it does not exist.</td></tr>
+    <tr><td class="id">FR-12</td><td>Any <code>:id</code> that is not a positive whole number (for example <code>abc</code>, <code>0</code>, <code>-3</code>, <code>1.5</code>) returns <code>400</code> before the database is touched.</td></tr>
+    <tr><td class="id">FR-13</td><td>A body that fails validation returns <code>400</code> with an <code>errors</code> array, one entry per problem, each naming the <code>field</code> and a readable <code>message</code>.</td></tr>
+    <tr><td class="id">FR-14</td><td>A body that is not valid JSON returns <code>400</code>. A body larger than 100 KB returns <code>413</code>.</td></tr>
+    <tr><td class="id">FR-15</td><td>A request to a path that does not exist returns <code>404</code> with the message "API endpoint not found."</td></tr>
+    <tr><td class="id">FR-16</td><td>An unexpected server error returns <code>500</code> with a generic message. The full error is written to the API terminal, never sent to the client.</td></tr>
+    <tr><td class="id">FR-17</td><td><code>GET /</code> returns <code>200</code> with a message saying the API is running (health check).</td></tr>
+    <tr><td class="id">FR-18</td><td>Tasks are stored in <code>api/database/tasks.db</code>. The folder and table are created automatically on first start, and tasks remain after the API restarts.</td></tr>
+  </tbody>
+</table></div>
+
+<h3>3.2 User interface</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-19</td><td>On load, the page shows "Loading tasks..." until the list arrives, then shows every task with its title, status badge, description (if any) and due date in the browser's local date format.</td></tr>
+    <tr><td class="id">FR-20</td><td>The header shows the total number of tasks ("1 task" or "N tasks").</td></tr>
+    <tr><td class="id">FR-21</td><td>The "Add a task" form has Title (required, max 120), Description (optional, max 2000) and Due date (required, date picker). Submitting creates the task and clears the form.</td></tr>
+    <tr><td class="id">FR-22</td><td>While a save is in progress, the submit button is disabled and reads "Saving..." so it cannot be clicked twice.</td></tr>
+    <tr><td class="id">FR-23</td><td>Clicking Edit fills the form with that task, changes the heading to "Edit task", shows a "Cancel edit" button and scrolls to the form. Saving keeps the task's current status.</td></tr>
+    <tr><td class="id">FR-24</td><td>A Complete button appears only on Pending tasks. Completed tasks show their title struck through.</td></tr>
+    <tr><td class="id">FR-25</td><td>Clicking Delete asks "Are you sure you want to delete this task?" and deletes only if the user confirms.</td></tr>
+    <tr><td class="id">FR-26</td><td>The All / Pending / Completed buttons filter the list. The active filter is highlighted and marked with <code>aria-pressed</code>.</td></tr>
+    <tr><td class="id">FR-27</td><td>When the list is empty, the page says "No tasks found" and suggests adding a task, or names the empty filter ("There are no completed tasks.").</td></tr>
+    <tr><td class="id">FR-28</td><td>After every create, update, complete or delete, a success message appears and the list reloads from the API. When a request fails, the API's message (or field messages joined together) appears in a red alert.</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 4 -->
+<h2 id="nonfunctional">4. Non-functional requirements</h2>
+<p>Targets marked <span class="tag warn">Assumed</span> have not been measured yet; they are listed in <a href="#questions">section 10</a>.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Area</th><th>Requirement and target</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">NFR-1</td><td>Security</td><td>CORS allows only the front-end origin set in <code>FRONTEND_URL</code> (default <code>http://localhost:3000</code>), never <code>*</code>.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-2</td><td>Security</td><td>All SQL uses prepared statements with bound parameters, so request data is never pasted into a query string.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-3</td><td>Security</td><td>Request bodies over 100 KB are rejected. Error responses never include stack traces.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-4</td><td>Data integrity</td><td>The database repeats the key rules as <code>CHECK</code> constraints (title length, allowed statuses), so bad data is refused even if validation is bypassed.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-5</td><td>Performance</td><td>With up to 1,000 tasks on a laptop, every API call responds in under 200 ms and the page shows the list within 1 second.</td><td><span class="tag warn">Assumed</span></td></tr>
+    <tr><td class="id">NFR-6</td><td>Responsiveness</td><td>The layout works without horizontal scrolling from 360 px to 1440 px wide. Below 640 px, the header, section headings and task cards stack into one column.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-7</td><td>Accessibility</td><td>Every input has a visible <code>&lt;label&gt;</code>; focused controls show a 3 px outline; errors use <code>role="alert"</code> and success messages <code>role="status"</code>.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-8</td><td>Reliability</td><td>Tasks survive an API restart. SQLite runs in WAL mode so reads are not blocked by a write.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-9</td><td>Maintainability</td><td>TypeScript runs in <code>strict</code> mode in both projects. Validation rules and the <code>TaskInput</code> type come from one Zod schema.</td><td><span class="tag ok">Met</span></td></tr>
+    <tr><td class="id">NFR-10</td><td>Portability</td><td>A stranger can run the project from a clean machine with Node.js LTS and pnpm by following the README only.</td><td><span class="tag bad">Not yet</span></td></tr>
+  </tbody>
+</table></div>
+<p>NFR-10 fails today because <code>pnpm build</code> in <code>api/</code> produces no output, so <code>pnpm start</code> cannot run. Details in the <a href="#gaps">appendix</a>, item G-1.</p>
+
+<!-- 5 -->
+<h2 id="data">5. Data model</h2>
+<p>The application has one entity, <b>Task</b>, stored in one SQLite table, <code>tasks</code>. There are no relationships yet. If user accounts are added later, a <code>users</code> table would own many tasks through a <code>user_id</code> foreign key (shown dashed below as a future option).</p>
+
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+erDiagram
+    TASKS {
+        INTEGER id PK "auto-increment"
+        TEXT title "1-120 chars, required"
+        TEXT description "default empty string"
+        TEXT due_date "YYYY-MM-DD"
+        TEXT status "Pending or Completed"
+        TEXT created_at "set by database"
+        TEXT updated_at "set by database"
+    }
+    USERS_FUTURE {
+        INTEGER id PK "not built"
+    }
+    USERS_FUTURE ||..o{ TASKS : "would own (future)"
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> each box is a table and each row a column with its type and rule. The dotted line is a relationship that does not exist yet; it shows where accounts would attach.</figcaption>
+</figure>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>Column</th><th>Type</th><th>Rule</th><th>Set by</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>INTEGER</td><td>Primary key, auto-increment</td><td>Database</td></tr>
+    <tr><td><code>title</code></td><td>TEXT</td><td>Not null; trimmed length 1 to 120</td><td>Client</td></tr>
+    <tr><td><code>description</code></td><td>TEXT</td><td>Not null; default <code>''</code>; max 2000 (checked in Zod only)</td><td>Client</td></tr>
+    <tr><td><code>due_date</code></td><td>TEXT</td><td>Not null; <code>YYYY-MM-DD</code> (checked in Zod only)</td><td>Client</td></tr>
+    <tr><td><code>status</code></td><td>TEXT</td><td>Not null; default <code>Pending</code>; must be <code>Pending</code> or <code>Completed</code></td><td>Client or PATCH</td></tr>
+    <tr><td><code>created_at</code></td><td>TEXT</td><td>Default <code>CURRENT_TIMESTAMP</code> (UTC, <code>YYYY-MM-DD HH:MM:SS</code>)</td><td>Database</td></tr>
+    <tr><td><code>updated_at</code></td><td>TEXT</td><td>Same format; reset on every PUT and PATCH</td><td>Database</td></tr>
+  </tbody>
+</table></div>
+<p>The API sends rows exactly as stored, so JSON responses use <code>snake_case</code> (<code>due_date</code>) while request bodies use <code>camelCase</code> (<code>dueDate</code>). This mismatch is listed as open question Q-6.</p>
+
+<h3>Task lifecycle</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+    [*] --> Pending : POST (status left out or Pending)
+    [*] --> Completed : POST with status Completed
+    Pending --> Completed : PATCH /complete or PUT
+    Completed --> Pending : PUT with status Pending (API only)
+    Pending --> [*] : DELETE
+    Completed --> [*] : DELETE
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> boxes are the two statuses; each arrow names the request that moves a task between them. Reopening a completed task is possible through the API but has no button in the UI.</figcaption>
+</figure>
+
+<!-- 6 -->
+<h2 id="api">6. API design</h2>
+<p>Base URL: <code>http://localhost:5000</code> (from <code>PORT</code> in <code>api/.env</code>). All bodies are JSON. Every response uses the same envelope:</p>
+<pre class="code"><code>{
+  "success": true | false,
+  "message": "Human-readable result",        // most responses
+  "data":    { ...task } | [ ...tasks ],     // on success, when there is data
+  "errors":  [ { "field": "title", "message": "Title is required" } ]  // 400 validation only
+}</code></pre>
+
+<h4>Request body for POST and PUT</h4>
+<pre class="code"><code>{
+  "title": "Prepare diagnostic walkthrough",   // required, 1-120 chars
+  "description": "Explain the architecture",   // optional, max 2000
+  "dueDate": "2026-11-28",                     // required, YYYY-MM-DD
+  "status": "Pending"                          // optional, defaults to Pending
+}</code></pre>
+
+<h4>Endpoints</h4>
+<div class="table-wrap"><table>
+  <thead><tr><th>Method</th><th>Path</th><th>Input</th><th>Success</th><th>Errors</th><th>Req.</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/</code></td><td>None</td><td class="num">200 message</td><td>None</td><td class="id">FR-17</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/tasks</code></td><td>Query <code>status</code> (optional)</td><td class="num">200 <code>data: Task[]</code></td><td class="num">400 bad status, 500</td><td class="id">FR-6, 7</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/tasks/:id</code></td><td>Path <code>id</code></td><td class="num">200 <code>data: Task</code></td><td class="num">400 bad id, 404, 500</td><td class="id">FR-8, 12</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/tasks</code></td><td>Body (above)</td><td class="num">201 <code>data: Task</code></td><td class="num">400 validation or JSON, 413, 500</td><td class="id">FR-1–5</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/tasks/:id</code></td><td>Path <code>id</code> + full body</td><td class="num">200 <code>data: Task</code></td><td class="num">400, 404, 413, 500</td><td class="id">FR-9</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/tasks/:id/complete</code></td><td>Path <code>id</code></td><td class="num">200 <code>data: Task</code></td><td class="num">400 bad id, 404, 500</td><td class="id">FR-10</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/tasks/:id</code></td><td>Path <code>id</code></td><td class="num">200 message only</td><td class="num">400 bad id, 404, 500</td><td class="id">FR-11</td></tr>
+    <tr><td>any</td><td>any other path</td><td>None</td><td>None</td><td class="num">404 "API endpoint not found."</td><td class="id">FR-15</td></tr>
+  </tbody>
+</table></div>
+
+<h4>Example: validation failure</h4>
+<pre class="code"><code>POST /api/tasks   { "title": "  ", "dueDate": "28-11-2026" }
+
+400 Bad Request
+{
+  "success": false,
+  "message": "Please correct the task information.",
+  "errors": [
+    { "message": "Title is required", "field": "title" },
+    { "message": "Due date must use YYYY-MM-DD format", "field": "dueDate" }
+  ]
+}</code></pre>
+
+<!-- 7 -->
+<h2 id="workflows">7. Workflows</h2>
+
+<h3>7.1 Startup sequence</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    A["pnpm dev<br/>runs tsx watch src/server.ts"] -->|"step 1: first import"| B["dotenv/config<br/>loads api/.env into process.env"]
+    B -->|"step 2: next imports run"| C["config/database.ts<br/>creates api/database, opens tasks.db,<br/>sets WAL, CREATE TABLE IF NOT EXISTS"]
+    C -->|"step 3: create app"| D["express() creates the app<br/>PORT = env.PORT or 5000"]
+    D -->|"step 4: global middleware"| E["cors (origin = FRONTEND_URL)<br/>express.json (limit 100kb)"]
+    E -->|"step 5: mount routes"| F["GET / health check<br/>/api/tasks to taskRoutes"]
+    F -->|"step 6: fallbacks"| G["404 handler<br/>then errorHandler (last)"]
+    G -->|"step 7: start"| H["app.listen(PORT)<br/>waits for requests"]
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> top to bottom is the order code runs when the API starts. Order matters: the JSON parser must come before the routes or <code>req.body</code> is undefined, and the error handler must come last so it can catch errors from everything above it.</figcaption>
+</figure>
+
+<h3>7.2 Request flow: create a task (POST /api/tasks)</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    R["Browser sends POST /api/tasks<br/>from localhost:3000"] --> C1{"CORS: origin is<br/>FRONTEND_URL?"}
+    C1 -->|"no"| X1["Browser blocks the response<br/>(no CORS headers)"]
+    C1 -->|"yes"| J{"express.json:<br/>valid JSON, under 100kb?"}
+    J -->|"bad JSON"| E400a["errorHandler: 400<br/>Invalid JSON format"]
+    J -->|"too large"| E413["errorHandler: 413<br/>Request body is too large"]
+    J -->|"yes"| RT["taskRoutes: router.post('/')<br/>calls createTask controller"]
+    RT --> AU["Signed in? Allowed?<br/>Not applicable: no auth (401/403 never sent)"]
+    AU --> V{"Zod createTaskSchema<br/>safeParse(req.body)"}
+    V -->|"fails"| E400b["400 with errors[]<br/>field + message"]
+    V -->|"passes"| S["taskService.createTask(data)"]
+    S --> M["taskModel.create:<br/>INSERT, then findById(lastInsertRowid)"]
+    M -->|"SQLite throws"| E500["next(error) to errorHandler<br/>log details, 500 safe message"]
+    M -->|"row saved"| OK["201 Created<br/>success, message, data: Task"]
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> follow one request from the top. Diamonds are checks; each labelled arrow is an outcome, and every end box is the response the client receives. The "not found" branch does not apply to create; it appears on GET, PUT, PATCH and DELETE when the model returns no row and the controller sends <code>404</code>.</figcaption>
+</figure>
+
+<h3>7.3 Request flow across both programs</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+    actor U as User
+    participant P as page.tsx (browser, :3000)
+    participant A as Express API (:5000)
+    participant D as SQLite tasks.db
+    U->>P: fills form, clicks "Add task"
+    P->>P: setSaving(true), button reads "Saving..."
+    P->>A: OPTIONS /api/tasks (CORS preflight, JSON Content-Type)
+    A-->>P: 204 Access-Control-Allow-Origin: localhost:3000
+    P->>A: POST /api/tasks {title, description, dueDate, status}
+    A->>A: validate with Zod
+    A->>D: INSERT INTO tasks ...
+    D-->>A: lastInsertRowid
+    A->>D: SELECT ... WHERE id = ?
+    D-->>A: task row
+    A-->>P: 201 {success, message, data}
+    P->>P: show "Task created successfully.", reset form
+    P->>A: GET /api/tasks
+    A->>D: SELECT ... ORDER BY due_date, id DESC
+    D-->>A: rows
+    A-->>P: 200 {success, data: Task[]}
+    P-->>U: updated list, button enabled again
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> time runs downward; solid arrows are calls, dashed arrows are replies. The preflight happens because the body is JSON. After any change, the page reloads the whole list instead of patching its local copy.</figcaption>
+</figure>
+
+<h3>7.4 User journey</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    O["Open localhost:3000"] --> L["Loading tasks..."]
+    L -->|"API down or error"| ER["Red alert with error message<br/>(form still usable)"]
+    L -->|"0 tasks"| EM["Empty state: No tasks found<br/>Add your first task"]
+    L -->|"1+ tasks"| LI["Task list + count"]
+    EM -->|"fill form, Add task"| SV["Saving... (button disabled)"]
+    LI -->|"fill form, Add task"| SV
+    LI -->|"Edit"| ED["Form prefilled, heading Edit task,<br/>Cancel edit shown"]
+    ED -->|"Save changes"| SV
+    ED -->|"Cancel edit"| LI
+    SV -->|"400 / network error"| ER
+    SV -->|"201 / 200"| OKM["Green success message,<br/>form cleared, list reloads"]
+    LI -->|"Complete (Pending only)"| OKM
+    LI -->|"Delete, then confirm"| OKM
+    LI -->|"Filter: Pending / Completed"| FL{"Any tasks<br/>match?"}
+    FL -->|"no"| EF["There are no pending/completed tasks."]
+    FL -->|"yes"| LI
+    OKM --> LI
+    ER -->|"fix input and retry"| SV
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> boxes are what the user sees on screen; arrows are the user's action or the API's answer. Every path ends in a visible state: loading, empty, list, success or error. The page never goes blank.</figcaption>
+</figure>
+
+<h3>7.5 Data flow</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    F["Form state<br/>title, description, dueDate"] -->|"JSON body (camelCase)"| Z["Zod schema<br/>trims, defaults, validates"]
+    Z -->|"TaskInput"| SQL["Prepared INSERT / UPDATE"]
+    SQL -->|"write"| DB[("tasks.db<br/>api/database")]
+    DB -->|"SELECT rows (snake_case)"| JS["JSON response data"]
+    JS -->|"setTasks()"| ST["React tasks state"]
+    ST -->|"useMemo filter"| V["Visible list on screen"]
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> top to bottom is the life of a task's data. It is created in the form, cleaned by Zod, stored by SQLite, read back as rows, held in React state, and filtered in the browser before it is shown.</figcaption>
+</figure>
+
+<!-- 8 -->
+<h2 id="architecture">8. Architecture and structure</h2>
+<p>The system is two separate programs on two ports. The browser loads the front end from port 3000 and calls the API on port 5000 directly. Because the ports differ, they are different origins, which is why the API needs CORS.</p>
+
+<h3>8.1 How the parts communicate</h3>
+<figure>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    U(["User"])
+    ENVW[".env.local<br/>NEXT_PUBLIC_API_URL"]
+    NX["web/ : Next.js dev server<br/>localhost:3000"]
+    CY["Cypress tests"]
+    UI["Browser<br/>page.tsx (React) runs here"]
+    PS["PowerShell or Postman"]
+    EX["api/ : Express server<br/>localhost:5000<br/>middleware, routes, controller,<br/>service, model"]
+    ENVA[".env<br/>PORT, FRONTEND_URL"]
+    DB[("SQLite file<br/>api/database/tasks.db")]
+
+    U -->|"clicks and types"| UI
+    ENVW -.->|"tells the page where the API is"| NX
+    UI -->|"step 1: GET the page"| NX
+    NX -->|"step 2: HTML, JS and CSS"| UI
+    CY -->|"drives a real browser"| UI
+    UI -->|"step 3: fetch JSON to /api/tasks<br/>GET, POST, PUT, PATCH, DELETE"| EX
+    EX -->|"step 6: JSON reply<br/>+ Access-Control-Allow-Origin"| UI
+    PS -->|"HTTP direct, no CORS check"| EX
+    ENVA -.->|"port to listen on, origin to allow"| EX
+    EX -->|"step 4: SQL, same process"| DB
+    DB -->|"step 5: rows"| EX
+</pre>
+  </div>
+  <figcaption><b>How to read it:</b> each box is a program or file; solid arrows are requests and replies, numbered in the order they happen, and dotted arrows are settings read at startup. The browser talks to two servers: Next.js only delivers the page, and every task operation goes straight from the browser to Express. Only Express touches the database, and it does that inside its own process, not over the network. What happens inside Express is drawn in 7.2.</figcaption>
+</figure>
+
+<pre class="code"><code>fbc23-diag-lerato/
+├── README.md
+├── docs/
+│   └── technical-document.html      this document
+├── api/                             Express API (port 5000)
+│   ├── .env.example                 PORT, FRONTEND_URL
+│   ├── database/tasks.db            created on first start (git-ignored)
+│   ├── swagger/swagger.ts           empty placeholder
+│   └── src/
+│       ├── server.ts                entry point: config, middleware, routes, listen
+│       ├── config/database.ts       opens SQLite, creates the table
+│       ├── routes/taskRoutes.ts     URL + method to controller function
+│       ├── controllers/taskController.ts   parse id, validate, pick status code
+│       ├── services/taskService.ts  business rules (currently pass-through)
+│       ├── models/taskModel.ts      the only file with SQL
+│       ├── middleware/errorHandler.ts      last-resort error to JSON
+│       └── types/task.ts            Zod schemas + Task, TaskInput types
+└── web/                             Next.js front end (port 3000)
+    ├── .env.local.example           NEXT_PUBLIC_API_URL
+    ├── app/layout.tsx               HTML shell, metadata, global CSS
+    ├── app/page.tsx                 the whole UI (client component)
+    ├── app/globals.css              styles and the 640px breakpoint
+    └── cypress/e2e/tasks.cy.ts      end-to-end tests</code></pre>
+
+<h4>Layers in the API</h4>
+<div class="table-wrap"><table>
+  <thead><tr><th>Layer</th><th>File</th><th>Job</th><th>Knows about</th></tr></thead>
+  <tbody>
+    <tr><td>Entry point</td><td><code>server.ts</code></td><td>Load config, register middleware in order, mount routes, listen</td><td>Express, routes, error handler</td></tr>
+    <tr><td>Route</td><td><code>taskRoutes.ts</code></td><td>Map method + path to a controller function</td><td>Controllers only</td></tr>
+    <tr><td>Controller</td><td><code>taskController.ts</code></td><td>Read the request, validate the id and body, call the service, choose the status code</td><td>HTTP, Zod schemas, service</td></tr>
+    <tr><td>Service</td><td><code>taskService.ts</code></td><td>Business rules. Today it only forwards calls, because there are no rules beyond validation yet</td><td>Model, types</td></tr>
+    <tr><td>Model (data access)</td><td><code>taskModel.ts</code></td><td>Run prepared SQL and return typed rows</td><td>Database connection</td></tr>
+    <tr><td>Types</td><td><code>types/task.ts</code></td><td>One Zod schema gives both runtime validation and the TypeScript type</td><td>Nothing</td></tr>
+  </tbody>
+</table></div>
+
+<p><b>How this maps to MVC:</b> routes and controllers are the Controller, the service and model are the Model, and the JSON response (plus the React page) is the View. The fit is imperfect: a REST API has no real view, and "model" is split into a service for rules and a model file that acts as a repository for storage.</p>
+<p><b>Dependency injection:</b> not used. <code>taskModel.ts</code> imports the database connection directly and the service imports the model directly. This keeps the code short but means the service cannot be tested without a real database. See item G-6.</p>
+
+<!-- 9 -->
+<h2 id="decisions">9. Decisions and trade-offs</h2>
+
+<h3>D-1 Database: SQLite (Architecture Decision Record)</h3>
+<div class="table-wrap"><table>
+  <tbody>
+    <tr><th>Context</th><td>One user, one table of short text records, run locally by reviewers who should not need to install a database server.</td></tr>
+    <tr><th>Options</th><td>SQLite (file), PostgreSQL (server), MongoDB (document store).</td></tr>
+    <tr><th>Criteria</th><td>Zero setup on a clean machine; data is structured with a fixed shape; constraints enforced by the database; low write volume.</td></tr>
+    <tr><th>Decision</th><td>SQLite through <code>better-sqlite3</code>. It is relational, enforces <code>CHECK</code> constraints, needs no server, and the file is created automatically.</td></tr>
+    <tr><th>Consequences</th><td>Only one writer at a time, so it does not suit many simultaneous users. <code>better-sqlite3</code> is a native module and must compile or download a binary for the installed Node version. Moving to PostgreSQL later means changing <code>config/database.ts</code> and <code>taskModel.ts</code> only.</td></tr>
+    <tr><th>Would change if</th><td>Many users write at once, the app is deployed to several servers, or reporting across many related tables is needed (PostgreSQL). MongoDB would only fit if task shapes became highly variable, which is not expected.</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Other decisions</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Decision</th><th>Alternative</th><th>Cost of the choice</th></tr></thead>
+  <tbody>
+    <tr><td class="id">D-2</td><td>Validate with Zod, and derive <code>TaskInput</code> from the schema</td><td>Hand-written <code>if</code> checks</td><td>One more dependency; in return the type and the runtime check cannot drift apart</td></tr>
+    <tr><td class="id">D-3</td><td>Layered folders (routes, controllers, services, models)</td><td>Feature folders (<code>tasks/</code> holding everything)</td><td>More files and indirection for one entity; scales better when features are added</td></tr>
+    <tr><td class="id">D-4</td><td>Two separate apps on two ports, called with CORS</td><td>Next.js route handlers or a dev proxy (one origin)</td><td>Must configure CORS and two env files; keeps the API usable from Postman or any client</td></tr>
+    <tr><td class="id">D-5</td><td>Filter in the browser with <code>useMemo</code></td><td>Call <code>GET /api/tasks?status=</code></td><td>Downloads every task; instant switching and correct total count. Fine for small lists</td></tr>
+    <tr><td class="id">D-6</td><td>Reload the full list after each change</td><td>Update local state from the response</td><td>One extra request per action; the screen always matches the database</td></tr>
+    <tr><td class="id">D-7</td><td>PUT replaces the whole task</td><td>PATCH with only the changed fields</td><td>Client must send every field, and a missing <code>status</code> becomes <code>Pending</code> (see Q-2)</td></tr>
+    <tr><td class="id">D-8</td><td>Consistent <code>{ success, message, data, errors }</code> envelope</td><td>Return the bare resource</td><td>Slightly larger responses; the front end handles every reply the same way</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 10 -->
+<h2 id="questions">10. Assumptions and open questions</h2>
+<h4>Assumptions</h4>
+<ul>
+  <li><b>A-1</b> One person uses the app at a time, on their own machine.</li>
+  <li><b>A-2</b> Due dates in the past are allowed (for recording overdue work).</li>
+  <li><b>A-3</b> Lists stay small (under about 1,000 tasks), so no pagination is needed.</li>
+  <li><b>A-4</b> Deleting is permanent; there is no undo or archive.</li>
+  <li><b>A-5</b> The performance targets in NFR-5 are reasonable for a local SQLite app but have not been measured.</li>
+</ul>
+
+<h4>Questions for the team</h4>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Question</th><th>Current behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">Q-1</td><td>Should impossible dates such as <code>2026-02-31</code> be rejected?</td><td>Accepted: the regex checks the format only</td></tr>
+    <tr><td class="id">Q-2</td><td>Should <code>status</code> be required on PUT, so leaving it out does not silently reopen a completed task?</td><td>Missing status defaults to <code>Pending</code>. The UI always sends it</td></tr>
+    <tr><td class="id">Q-3</td><td>Should a completed task be reopenable from the UI?</td><td>Only through the API (PUT)</td></tr>
+    <tr><td class="id">Q-4</td><td>Should DELETE return <code>204 No Content</code>, as the Week 2 guide suggests?</td><td>Returns <code>200</code> with a message</td></tr>
+    <tr><td class="id">Q-5</td><td>Should POST return a <code>Location</code> header pointing at the new task?</td><td>No header</td></tr>
+    <tr><td class="id">Q-6</td><td>Should responses use <code>camelCase</code> to match request bodies?</td><td>Requests use <code>dueDate</code>; responses use <code>due_date</code></td></tr>
+    <tr><td class="id">Q-7</td><td>Should timestamps include a time zone (ISO 8601 with <code>Z</code>)?</td><td>UTC without a zone marker</td></tr>
+    <tr><td class="id">Q-8</td><td>Is sign-in expected in the next iteration? It would change every endpoint (401/403) and the data model.</td><td>No authentication</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 11 -->
+<h2 id="cut">11. Out of scope and cut list</h2>
+<h4>Will not build in this iteration</h4>
+<ul>
+  <li>Sign-in, accounts and per-user task lists.</li>
+  <li>Search, custom sorting, pagination, tags or priorities.</li>
+  <li>Deployment to Azure, and Terraform (parked for Week 2).</li>
+  <li>Swagger / OpenAPI documentation (the empty <code>swagger.ts</code> and its packages should be removed or finished).</li>
+</ul>
+<h4>Cut first if time runs short (half-time test)</h4>
+<ol>
+  <li>The Edit feature (users can delete and recreate a task).</li>
+  <li>The status filter.</li>
+  <li>The delete confirmation dialog.</li>
+</ol>
+<p>The thin vertical slice that must always work is: add a task, see it in the list, mark it complete, delete it.</p>
+
+<!-- Appendix -->
+<h2 id="gaps">Appendix: document vs code check</h2>
+<p>While writing this document I checked each requirement against the code. These are the places where they disagree, or where last week's work can be improved. Each item is matched to its focus area from the Week 2 guide.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Finding</th><th>Where</th><th>Area</th><th>Plan</th></tr></thead>
+  <tbody>
+    <tr><td class="id">G-1</td><td><code>api/tsconfig.json</code> was copied from the Next.js project. It has <code>"noEmit": true</code>, the <code>next</code> plugin and no <code>outDir</code>, so <code>pnpm build</code> writes nothing and <code>pnpm start</code> (<code>node dist/server.js</code>) fails.</td><td><code>api/tsconfig.json:10</code></td><td>1, 12</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-2</td><td>The README ends with two stray lines (<code>### Create a new file from that path</code> and a <code>New-Item</code> command), has no table of environment variables, and has not been tested from a fresh clone.</td><td><code>README.md:187</code></td><td>12</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-3</td><td>When the API is not running, the page shows the browser's raw "Failed to fetch" instead of a plain message saying the API cannot be reached and how to start it.</td><td><code>web/app/page.tsx:39</code></td><td>16</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-4</td><td>Complete and Delete buttons are not disabled while their request runs, so a double click sends two requests.</td><td><code>web/app/page.tsx</code></td><td>16</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-5</td><td>The <code>Task</code> type is defined again in the front end instead of being shared, so the two copies can drift.</td><td><code>web/app/page.tsx:6</code></td><td>10</td><td><span class="tag warn">Decide</span></td></tr>
+    <tr><td class="id">G-6</td><td>The service and model import their dependencies directly, so business rules cannot be tested with a fake repository.</td><td><code>api/src/services/taskService.ts</code></td><td>9</td><td><span class="tag warn">Decide</span></td></tr>
+    <tr><td class="id">G-7</td><td><code>page.tsx</code> holds fetching, state, form and list in one component of about 220 lines.</td><td><code>web/app/page.tsx</code></td><td>8</td><td><span class="tag warn">Decide</span></td></tr>
+    <tr><td class="id">G-8</td><td>Cypress tests only check that the page and buttons render; no test creates, completes or deletes a task, and the API has no tests.</td><td><code>web/cypress/e2e/tasks.cy.ts</code></td><td>13, 15</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-9</td><td>A typo in a comment ("yThis"), and several comments that repeat the code ("GET: Retrieve all tasks") instead of saying why.</td><td><code>api/src/middleware/errorHandler.ts:63</code></td><td>11</td><td><span class="tag bad">Fix</span></td></tr>
+    <tr><td class="id">G-10</td><td><code>swagger.ts</code> is empty, but <code>swagger-jsdoc</code> and <code>swagger-ui-express</code> are installed.</td><td><code>api/swagger/swagger.ts</code></td><td>15</td><td><span class="tag warn">Decide</span></td></tr>
+    <tr><td class="id">G-11</td><td>Impossible dates pass validation (Q-1), and PUT without <code>status</code> reopens a task (Q-2).</td><td><code>api/src/types/task.ts</code></td><td>10</td><td><span class="tag warn">Decide</span></td></tr>
+  </tbody>
+</table></div>
+<p><span class="tag bad">Fix</span> means the code will change. <span class="tag warn">Decide</span> means it will either change or get a written reason for staying as it is.</p>
+
+<div class="footer">
+  <span>Mini Task Tracker · Technical Requirements Document</span>
+  <span>FBC23 Developer Diagnostic · Week 2</span>
+</div>
+
+</main>

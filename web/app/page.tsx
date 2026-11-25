@@ -139,7 +139,7 @@ export default function HomePage() {
     <main className="page-shell">
       <header className="page-header">
         <div>
-          <p className="eyebrow">FBC23 Developer Diagnostic</p>
+          <p className="eyebrow">FBC23 Lerato Developer Diagnostic</p>
           <h1>Mini Task Tracker</h1>
           <p className="header-copy">Create tasks, keep track of due dates and see what is complete.</p>
         </div>
